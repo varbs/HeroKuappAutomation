@@ -1,5 +1,5 @@
 const { test, expect } = require('@playwright/test');
-const LoginPage = require('../pages/loginPage');
+const LoginPage = require('../../pages/loginPage');
 
 test('Verify the page title', async ({ page }) => {
     await page.goto('/');

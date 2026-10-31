@@ -1,12 +1,20 @@
 # HeroKuapp Automation
 
-End-to-end UI tests for [The Internet](https://the-internet.herokuapp.com), a practice site for test automation, written with [Playwright](https://playwright.dev) in JavaScript.
+Automated tests written with [Playwright](https://playwright.dev) in JavaScript:
 
-The tests run on Chromium, Firefox and WebKit.
+- **UI tests** for [The Internet](https://the-internet.herokuapp.com), a practice site for test automation. They run on Chromium, Firefox, WebKit, Google Chrome and Microsoft Edge.
+- **API tests** for [JSONPlaceholder](https://jsonplaceholder.typicode.com), a free fake REST API.
+
+## Explore the repo
+
+- [GitDiagram](https://gitdiagram.com/varbs/herokuappautomation): an interactive diagram of the project's structure
+- [GitIngest](https://gitingest.com/varbs/HeroKuappAutomation): the whole codebase as one text digest, handy for pasting into an AI assistant
 
 ## What's covered
 
-All tests live in [tests/login.spec.js](tests/login.spec.js):
+### UI tests
+
+These live in [tests/ui/login.spec.js](tests/ui/login.spec.js):
 
 | Area | What it checks |
 | --- | --- |
@@ -25,6 +33,19 @@ All tests live in [tests/login.spec.js](tests/login.spec.js):
 | Screenshots | Saving a screenshot of the login page to `login.png` |
 | JavaScript alerts | Accepting alert, confirm and prompt dialogs |
 
+### API tests
+
+These live in [tests/api/post.spec.js](tests/api/post.spec.js) and use the `/posts` endpoint:
+
+| Request | What it checks |
+| --- | --- |
+| `GET /posts/1` | Returns 200 and the expected post |
+| `POST /posts` | Returns 201 and echoes back the new post with an `id` |
+| `PUT /posts/1` | Returns 200 and the updated post |
+| `DELETE /posts/1` | Returns 200 |
+| `GET /posts/9999` | Returns 404 for a post that doesn't exist |
+| `GET /posts` | Returns 100 posts, each with the expected fields and types |
+
 ## Project structure
 
 ```
@@ -33,8 +54,9 @@ All tests live in [tests/login.spec.js](tests/login.spec.js):
 ├── pages/
 │   └── loginPage.js                   # Page object for the login page
 ├── tests/
-│   ├── data/sample.txt                # File used by the upload test
-│   └── login.spec.js                  # Test suite
+│   ├── api/post.spec.js               # API tests
+│   ├── ui/login.spec.js               # UI tests
+│   └── data/sample.txt                # File used by the upload test
 ├── playwright.config.js               # Playwright settings
 └── package.json
 ```
@@ -50,14 +72,19 @@ npm install
 npx playwright install
 ```
 
+The `ui-chrome` and `ui-edge` projects use the Google Chrome and Microsoft Edge browsers installed on your computer. If you don't have them, install them with `npx playwright install chrome msedge`, or skip those projects (see below).
+
 ## Running the tests
 
 ```bash
-# Run everything on all three browsers
+# Run everything (UI on all five browsers, plus API)
 npx playwright test
 
-# Run on one browser
-npx playwright test --project=chromium
+# Run only the API tests
+npx playwright test --project=api
+
+# Run the UI tests on one browser
+npx playwright test --project=ui-chromium
 
 # Run one test by name
 npx playwright test -g "Verify valid login"
@@ -77,15 +104,19 @@ Each run writes an HTML report to `playwright-report/`. To open it:
 npx playwright show-report
 ```
 
-Screenshots and traces are recorded for every test (`screenshot: 'on'` and `trace: 'on'` in [playwright.config.js](playwright.config.js)). They're saved to `test-results/` and attached to the report.
+For UI tests, screenshots and traces are kept only when a test fails (`'retain-on-failure'` in [playwright.config.js](playwright.config.js)). They're saved to `test-results/` and attached to the report.
 
 ## Configuration
 
 Main settings in [playwright.config.js](playwright.config.js):
 
-- **`baseURL`**: `https://the-internet.herokuapp.com`, so tests can call `page.goto('/login')`
-- **Browsers**: Chromium, Firefox and WebKit
-- **Parallel runs**: on locally; on CI, tests use one worker and get 2 retries
+| Project | Tests | Base URL |
+| --- | --- | --- |
+| `ui-chromium`, `ui-firefox`, `ui-webkit` | UI | `https://the-internet.herokuapp.com` |
+| `ui-chrome`, `ui-edge` | UI, on the installed Chrome and Edge | `https://the-internet.herokuapp.com` |
+| `api` | API | `https://jsonplaceholder.typicode.com` |
+
+Because of the base URLs, tests can use short paths such as `page.goto('/login')` or `request.get('/posts/1')`. Failed tests are retried twice on CI and not at all locally.
 
 ## Continuous integration
 
